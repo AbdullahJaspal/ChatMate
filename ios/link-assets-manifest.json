@@ -1,0 +1,17 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "src/assets/fonts/bayon.ttf",
+      "sha1": "0d8549222724fb3bcb1866869889e412f575db99"
+    },
+    {
+      "path": "src/assets/fonts/chivo-light.ttf",
+      "sha1": "7dcf2d03229643f2c74b2a36e6565e09fbd928a9"
+    },
+    {
+      "path": "src/assets/fonts/chivo.ttf",
+      "sha1": "2b5c1bc39e4776443be9e8fce67b3738edcaee02"
+    }
+  ]
+}
