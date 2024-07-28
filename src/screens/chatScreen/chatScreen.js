@@ -27,99 +27,179 @@ import {
 } from 'react-native-gifted-chat';
 import chatStyles from './styles';
 import Video, {VideoRef} from 'react-native-video';
-import {Icon} from 'react-native-elements';
+import {Icon, withTheme} from 'react-native-elements';
+import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import {primary} from '../../constants/Colors';
-import Animated from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  interpolate,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 
 const {width, height} = Dimensions.get('screen');
 const ChatScreen = () => {
   const [messages, setMessages] = useState([]);
   const [myMessage, setMyMessage] = useState('');
-  const [controls, setControls] = useState(false);
+  const [butt, setButt] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
-
+  const buttonAnim = useSharedValue(0);
   const videoRef = useRef < VideoRef > null;
+  const cameraStyle = useAnimatedStyle(() => {
+    const width = interpolate(buttonAnim.value, [1, 0], [40, 0]);
+    const bottom = interpolate(buttonAnim.value, [1, 0], [110, 0]);
+    const zIndex = interpolate(buttonAnim.value, [1, 0], [100, 0]);
+    const right = interpolate(buttonAnim.value, [1, 0], [5, -10]);
+    return {
+      width: width,
+      bottom: bottom,
+      height: width,
+      zIndex: zIndex,
+      right: right,
+    };
+  });
+  const galleryStyle = useAnimatedStyle(() => {
+    const width = interpolate(buttonAnim.value, [1, 0], [40, 0]);
+    const bottom = interpolate(buttonAnim.value, [1, 0], [100, 0]);
+    const right = interpolate(buttonAnim.value, [1, 0], [5, -10]);
+    const zIndex = interpolate(buttonAnim.value, [1, 0], [100, 0]);
+    return {
+      width: width,
+      bottom: bottom,
+      height: width,
+      right: right,
+      zIndex: zIndex,
+    };
+  });
 
-  useEffect(() => {
-    setMessages([
-      {
-        _id: 2,
-        text: 'Hello developer',
-        createdAt: new Date(Date.UTC(2016, 5, 12, 17, 20, 0)),
-        user: {
-          _id: 2,
-          name: 'React Native',
-          avatar: 'https://placeimg.com/140/140/any',
-        },
-      },
-      {
-        _id: 3,
-        text: 'Hi! I work from home today! Hi! I work from home today!',
-        createdAt: new Date(Date.UTC(2016, 5, 13, 17, 20, 0)),
+  const handleCameraLaunch = async (isCamera: boolean) => {
+    const options = {
+      mediaType: 'photo',
+    };
+
+    try {
+      const response = await launchCamera(options);
+      console.log('pickedFile', response);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+  const handleImageLibrary = async (isCamera: boolean) => {
+    const options = {
+      mediaType: 'photo',
+    };
+
+    try {
+      const response = await launchImageLibrary(options);
+      console.log('pickedFile', response);
+      const mess = {
+        _id: messages.length + 1,
+        createdAt: new Date(),
         user: {
           _id: 1,
           name: 'React Native',
+          createdAt: new Date(),
           avatar:
             'https://media.licdn.com/dms/image/D4D08AQE0CXu4hnoe7g/croft-frontend-shrinkToFit1024/0/1646754728586?e=2147483647&v=beta&t=ADkOVwOwmP-4rCH4y0g2_OBFlsszl01TpQPhCgt5SSc',
         },
-        image:
-          'https://media.licdn.com/dms/image/D4D08AQE0CXu4hnoe7g/croft-frontend-shrinkToFit1024/0/1646754728586?e=2147483647&v=beta&t=ADkOVwOwmP-4rCH4y0g2_OBFlsszl01TpQPhCgt5SSc',
-      },
+        image: response.assets[0].uri,
+        text: '',
+      };
+      setMessages(previousMessages =>
+        GiftedChat.append(previousMessages, mess),
+      );
+      handleButtAnim();
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
 
-      {
-        _id: 5,
-        text: 'This is a quick reply. Do you love Gifted Chat? (checkbox)',
-        createdAt: new Date(Date.UTC(2016, 5, 15, 17, 20, 0)),
-        user: {
-          _id: 2,
-          name: 'React Native',
-          avatar: 'https://placeimg.com/140/140/any',
-        },
-        // video: 'https://www.w3schools.com/html/mov_bbb.mp4',
+  const handleButtAnim = () => {
+    buttonAnim.value = butt ? withTiming(0) : withSpring(1);
+    setButt(!butt);
+  };
 
-        quickReplies: {
-          type: 'checkbox', // or 'radio',
-          values: [
-            {
-              title: 'Yes',
-              value: 'yes',
-            },
-            {
-              title: 'Yes, let me show you with a picture!',
-              value: 'yes_picture',
-            },
-            {
-              title: 'Nope. What?',
-              value: 'no',
-            },
-          ],
-        },
-      },
-      {
-        _id: 6,
-        text: 'Come on!',
-        createdAt: new Date(Date.UTC(2016, 5, 15, 18, 20, 0)),
-        user: {
-          _id: 2,
-          name: 'React Native',
-          avatar: 'https://placeimg.com/140/140/any',
-        },
-      },
-      {
-        _id: 7,
-        text: `Hello this is an example of the ParsedText, links like http://www.google.com or http://www.facebook.com are clickable and phone number 444-555-6666 can call too.
-        But you can also do more with this package, for example Bob will change style and David too. foo@gmail.com
-        And the magic number is 42!
-        #react #react-native`,
-        createdAt: new Date(Date.UTC(2016, 5, 13, 17, 20, 0)),
-        user: {
-          _id: 1,
-          name: 'React Native',
-          avatar: 'https://placeimg.com/140/140/any',
-        },
-      },
-    ]);
-  }, []);
+  // useEffect(() => {
+  //   setMessages([
+  //     {
+  //       _id: 2,
+  //       text: 'Hello developer',
+  //       createdAt: new Date(Date.UTC(2016, 5, 12, 17, 20, 0)),
+  //       user: {
+  //         _id: 2,
+  //         name: 'React Native',
+  //         avatar: 'https://placeimg.com/140/140/any',
+  //       },
+  //     },
+  //     {
+  //       _id: 3,
+  //       text: 'Hi! I work from home today! Hi! I work from home today!',
+  //       createdAt: new Date(Date.UTC(2016, 5, 13, 17, 20, 0)),
+  //       user: {
+  //         _id: 1,
+  //         name: 'React Native',
+  //         avatar:
+  //           'https://media.licdn.com/dms/image/D4D08AQE0CXu4hnoe7g/croft-frontend-shrinkToFit1024/0/1646754728586?e=2147483647&v=beta&t=ADkOVwOwmP-4rCH4y0g2_OBFlsszl01TpQPhCgt5SSc',
+  //       },
+  //       image:
+  //         'https://media.licdn.com/dms/image/D4D08AQE0CXu4hnoe7g/croft-frontend-shrinkToFit1024/0/1646754728586?e=2147483647&v=beta&t=ADkOVwOwmP-4rCH4y0g2_OBFlsszl01TpQPhCgt5SSc',
+  //     },
+
+  //     {
+  //       _id: 5,
+  //       text: 'This is a quick reply. Do you love Gifted Chat? (checkbox)',
+  //       createdAt: new Date(Date.UTC(2016, 5, 15, 17, 20, 0)),
+  //       user: {
+  //         _id: 2,
+  //         name: 'React Native',
+  //         avatar: 'https://placeimg.com/140/140/any',
+  //       },
+  //       // video: 'https://www.w3schools.com/html/mov_bbb.mp4',
+
+  //       quickReplies: {
+  //         type: 'checkbox', // or 'radio',
+  //         values: [
+  //           {
+  //             title: 'Yes',
+  //             value: 'yes',
+  //           },
+  //           {
+  //             title: 'Yes, let me show you with a picture!',
+  //             value: 'yes_picture',
+  //           },
+  //           {
+  //             title: 'Nope. What?',
+  //             value: 'no',
+  //           },
+  //         ],
+  //       },
+  //     },
+  //     {
+  //       _id: 6,
+  //       text: 'Come on!',
+  //       createdAt: new Date(Date.UTC(2016, 5, 15, 18, 20, 0)),
+  //       user: {
+  //         _id: 2,
+  //         name: 'React Native',
+  //         avatar: 'https://placeimg.com/140/140/any',
+  //       },
+  //     },
+  //     {
+  //       _id: 7,
+  //       text: `Hello this is an example of the ParsedText, links like http://www.google.com or http://www.facebook.com are clickable and phone number 444-555-6666 can call too.
+  //       But you can also do more with this package, for example Bob will change style and David too. foo@gmail.com
+  //       And the magic number is 42!
+  //       #react #react-native`,
+  //       createdAt: new Date(Date.UTC(2016, 5, 13, 17, 20, 0)),
+  //       user: {
+  //         _id: 1,
+  //         name: 'React Native',
+  //         avatar: 'https://placeimg.com/140/140/any',
+  //       },
+  //     },
+  //   ]);
+  // }, []);
 
   const onSend = useCallback((messages = []) => {
     setMessages(previousMessages =>
@@ -127,6 +207,7 @@ const ChatScreen = () => {
     );
   }, []);
 
+  console.log(messages);
   const renderChatEmpty = () => {
     return (
       <View style={chatStyles.emptyChatrender}>
@@ -154,15 +235,36 @@ const ChatScreen = () => {
         <Icon name="refresh" type="font-awesome" size={22} />
 
         <View>
-          <Icon name="images" type="entypo" size={22} />
-          <View style={{position: 'absolute'}}>
-            <Animated.View style={chatStyles.iconStyle}>
-              <Icon type="feather" name={'camera'} />
+          <View style={{position: 'absolute', zIndex: 0}}>
+            <Animated.View style={[chatStyles.iconStyle, cameraStyle]}>
+              <Icon
+                type="feather"
+                name={'camera'}
+                size={19}
+                onPress={() => {
+                  handleCameraLaunch();
+                }}
+              />
             </Animated.View>
-            <Animated.View style={chatStyles.iconStyle}>
-              <Icon type="font-awesome" name={'image'} />
+            <Animated.View style={[chatStyles.iconStyle, galleryStyle]}>
+              <Icon
+                type="font-awesome"
+                name={'image'}
+                size={19}
+                onPress={() => {
+                  handleImageLibrary();
+                }}
+              />
             </Animated.View>
           </View>
+          <Icon
+            name="images"
+            type="entypo"
+            size={22}
+            onPress={() => {
+              handleButtAnim();
+            }}
+          />
         </View>
       </View>
     );
@@ -171,6 +273,8 @@ const ChatScreen = () => {
   const renderComposer = props => {
     return (
       <Composer
+        composerHeight={40}
+        multiline={false}
         {...props}
         textInputStyle={{
           color: '#222B45',
@@ -178,9 +282,9 @@ const ChatScreen = () => {
           borderWidth: 1,
           borderRadius: 5,
           borderColor: '#E4E9F2',
-          paddingTop: 8.5,
           paddingHorizontal: 12,
           marginLeft: 0,
+          height: 40,
         }}
       />
     );
@@ -237,7 +341,6 @@ const ChatScreen = () => {
     );
   };
   const renderBubble = props => {
-    console.log(props);
     return (
       <Bubble
         {...props}
