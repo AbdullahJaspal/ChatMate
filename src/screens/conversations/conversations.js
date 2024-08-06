@@ -206,6 +206,7 @@ const Conversations = () => {
     });
     setData(arr);
   };
+
   return (
     <View style={{flex: 1}}>
       <View style={convoStyles.topCont}>
